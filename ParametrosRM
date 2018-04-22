@@ -1,0 +1,12 @@
+# Especificación de parámetos:
+#-----------------------------
+
+# Nota: todos los valores de texto van entre comillas dobles ""
+
+[Parametros del sistema]
+
+URLRedmine = "https://colo1.msp.gub.uy/redmine/"
+usuarioRM = "lcibils"
+passRM = "xxxxxxx"
+
+pathExcel = "C:\Users\Usuario\PycharmProjects\Redmine\venv\Datos.xlsx"
