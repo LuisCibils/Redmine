@@ -11,7 +11,7 @@ import sys
 import configparser
 
 def getParameters():
-   # se obtienen los parámetros del sistema desde el archivo del primer parámetro
+   # se obtienen los parámetros del sistema desde el archivo del primer parámetro a
    parametros = sys.argv[1]
    log.info('Archivo de parámetros: {}'.format(parametros))
    config = configparser.ConfigParser()
