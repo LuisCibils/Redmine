@@ -28,19 +28,10 @@ class RM():
 
         self.trackers = self.statuses = self.priorities = self.categories = self.roles = None
 
-    def objProject(self, projectName):
+    def checkValidProject(self, projectName):
         '''
         :return: Devuelve el objeto 'project'
         '''
-        try:
-            projects = self.redmine.project.all()
-            self.project = [x for x in projects if x.name == projectName][0]
-            return self.project
-        except:
-            raise ValueError('Hubo error en la conexión o bien no existe proyecto con ese nombre')
-            return False
-
-    def checkValidProject(self, projectName):
         try:
             projects = self.redmine.project.all()
             self.project = [x for x in projects if x.name == projectName][0]
@@ -84,12 +75,6 @@ class RM():
                 if not r:
                     msg = 'Value not valid'
         return r, msg
-
-    def idProject(self):
-        '''
-        :return: Devuelve el id del proyecto
-        '''
-        return self.project.id
 
     def checkValidTracker(self, trackerName):
         msg = 'Ok'
@@ -302,9 +287,9 @@ if __name__ == "__main__":
 
     url = 'https://colo1.msp.gub.uy/redmine/'
     token = '7912b4cc1a85bbc3f0f8637bac2329d80a1a66a9'
-    p = RM(url, token, proj)
+    p = RM(url, token)
 
-    print('id project: ', p.idProject())
+    print('id project: ', p.checkValidProject(proj))
     print('id tracker: ', p.idTracker(track))
     print('id status:', p.idStatus(status))
     print('id category:', p.idCategory(category))
