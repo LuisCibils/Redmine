@@ -40,42 +40,6 @@ class RM():
             raise ValueError('Hubo error en la conexión o bien no existe proyecto con ese nombre')
             return False
 
-    def checkFieldIsValid(self, fieldName):
-        return fieldName in dict.keys(self.fields)
-
-    def checkValueisValidField(self, field, value):
-        v = self.fields.get(field) # toma el valor asociado al parametro 'field' en el dict 'fields'
-        msg = 'Ok'
-        r = True
-        if v == '*':
-            if value == '':
-                msg = 'Required'
-                r = False
-        elif v[1:3] == 'id': # value not required but if exists must be in the list
-            if value == '':
-                if v[0] == '-':
-                    r = True
-                else:
-                    msg = 'Required'
-                    r = False
-            else: # value not null, must be in the list
-                f = v[4:]
-                if f == 'status':
-                    r = self.idStatus(value)
-                elif f == 'category':
-                    r = self.idCategory(value)
-                elif f == 'user':
-                    idU = self.idUser(value)
-                    if idU:
-                        r = self.checkUserIdInProject(idU)
-                    else:
-                        r = False
-                elif f == 'priority':
-                    r = self.idPriority(value)
-                if not r:
-                    msg = 'Value not valid'
-        return r, msg
-
     def checkValidTracker(self, trackerName):
         msg = 'Ok'
         r = True
@@ -91,18 +55,6 @@ class RM():
             r = False
         return r, msg
 
-    def idTracker(self, trackerName):
-        '''
-            :param trackerName: Nombre del tipo de petición
-            :return: Devuelve el id del tipo de petición o False si no existe
-        '''
-        if not self.trackers:
-            self.trackers = self.redmine.tracker.all()
-        try:
-            self.tracker = [x for x in self.trackers if x.name == trackerName][0]
-            return self.tracker.id
-        except:
-            return False
 
     def idStatus(self, statusName):
         '''
@@ -117,12 +69,6 @@ class RM():
         except:
             return False
 
-    def listCategoriesInProject(self):
-        '''
-            :return: Devuelve la lista de id y nombre de las categorías del proyecto
-        '''
-        return [(x.id, x.name) for x in self.project.issue_categories]
-
     def idCategory(self, categoryName):
         '''
             :param categoryName: Nombre de la categoría
@@ -135,12 +81,6 @@ class RM():
             return c.id
         except:
             return False
-
-    def listTrackersInProject(self):
-        '''
-            :return: Devuelve la lista de id y nombre de los tipos de petición del proyecto
-        '''
-        return [(x.id, x.name) for x in self.project.trackers]
 
     def idPriority(self, priorityName):
         '''
@@ -179,6 +119,42 @@ class RM():
         except:
             return False
 
+    def checkFieldIsValid(self, fieldName):
+        return fieldName in dict.keys(self.fields)
+
+    def checkValueisValidField(self, field, value):
+        v = self.fields.get(field) # toma el valor asociado al parametro 'field' en el dict 'fields'
+        msg = 'Ok'
+        r = True
+        if v == '*':
+            if value == '':
+                msg = 'Required'
+                r = False
+        elif v[1:3] == 'id': # value not required but if exists must be in the list
+            if value == '':
+                if v[0] == '-':
+                    r = True
+                else:
+                    msg = 'Required'
+                    r = False
+            else: # value not null, must be in the list
+                f = v[4:]
+                if f == 'status':
+                    r = self.idStatus(value)
+                elif f == 'category':
+                    r = self.idCategory(value)
+                elif f == 'user':
+                    idU = self.idUser(value)
+                    if idU:
+                        r = self.checkUserIdInProject(idU)
+                    else:
+                        r = False
+                elif f == 'priority':
+                    r = self.idPriority(value)
+                if not r:
+                    msg = 'Value not valid'
+        return r, msg
+
     def checkUserNameInProject(self, userName):
         '''
             :param userName: Nombre del usuario
@@ -196,22 +172,6 @@ class RM():
         m = self.project.memberships
         return any(userId == x.user['id'] for x in m if hasattr(x, 'user'))
 
-    def listUsersInProjectRol(self, rolId):
-        '''
-            :param rolId: Id del rol
-            :return: Lista id y nombre de todos los usuarios de un proyecto que tienen un rol determinado
-        '''
-        m = self.project.memberships
-        return set([(x.user['id'], x.user['name']) for x in m for y in x.roles if y.id == rolId and hasattr(x, 'user')])
-
-    def listGroupsInProjectRol(self, rolId):
-        '''
-            :param rolId:
-            :return: Lista id y nombre de todos los grupos de usuarios de un proyecto que tienen un rol determinado
-        '''
-        m = self.project.memberships
-        return set([(x.group['id'], x.group['name']) for x in m for y in x.roles if y.id == rolId and hasattr(x, 'group')])
-
     def chkUserInProjectRol(self, userId, rolId):
         '''
             :param userId: id del usuario
@@ -227,13 +187,6 @@ class RM():
             :return: Verifica, por id, que el tipo de petición pertenezca a un proyecto
         '''
         return idTracker in [x.id for x in self.project.trackers]
-
-    def composeCustomFields(self, *args):
-        '''
-        Compose a dict with: custom_fields = [{'id': 1, 'value': 'foo'}, {'id': 2, 'value': 'bar'}]
-        :param args:
-        :return:
-        '''
 
     def createIssue(self, fieldsDict):
         issue = self.redmine.issue.new()
@@ -269,6 +222,35 @@ class RM():
             issue.uploads =  [{'path': fieldsDict['Ficheros']}]
         issue.save()
         return
+
+
+    def listTrackersInProject(self):
+        '''
+            :return: Devuelve la lista de id y nombre de los tipos de petición del proyecto
+        '''
+        return [(x.id, x.name) for x in self.project.trackers]
+
+    def listUsersInProjectRol(self, rolId):
+        '''
+            :param rolId: Id del rol
+            :return: Lista id y nombre de todos los usuarios de un proyecto que tienen un rol determinado
+        '''
+        m = self.project.memberships
+        return set([(x.user['id'], x.user['name']) for x in m for y in x.roles if y.id == rolId and hasattr(x, 'user')])
+
+    def listGroupsInProjectRol(self, rolId):
+        '''
+            :param rolId:
+            :return: Lista id y nombre de todos los grupos de usuarios de un proyecto que tienen un rol determinado
+        '''
+        m = self.project.memberships
+        return set([(x.group['id'], x.group['name']) for x in m for y in x.roles if y.id == rolId and hasattr(x, 'group')])
+
+    def listCategoriesInProject(self):
+        '''
+            :return: Devuelve la lista de id y nombre de las categorías del proyecto
+        '''
+        return [(x.id, x.name) for x in self.project.issue_categories]
 
 if __name__ == "__main__":
     '''
