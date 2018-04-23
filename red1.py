@@ -364,25 +364,5 @@ map = {
 }
 '''
 '''
-m = {
-    'a': 'a1',
-    'b': 'b1',
-    'c': 'c1'
-}
 
-l = ['a1', 'c1']
-r =[] # contendrá la lisa de variables de cada columna
-for i in l:
-    if i in m.values():
-        r.append(list(m.keys())[list(m.values()).index(i)])
-    else:
-        print('error')
-        break
-print(r)
-
-categories = redmine.issue_category.filter(project_id=p.Id)
-print(dir(categories[0]))
-for c in categories:
-    print(c.id, c.name)
-#print([(c.id) for c in categories])
 '''
