@@ -51,10 +51,10 @@ def readCustomFields(s1):
 
 def checkValidFields(row0):
     noValidosStd = [f for f in row0 if not rm.checkFieldIsValid(f)]
-    print('noValidosStd: ', noValidosStd)
+    #print('noValidosStd: ', noValidosStd)
     if noValidosStd:
         noValidos = set(noValidosStd - dict.keys(cFields))
-        print('noValidos: ', noValidos)
+        #print('noValidos: ', noValidos)
         if noValidos:
             log.info('Los siguientes campos no son válidos: {}'.format(noValidos))
             return False
@@ -93,7 +93,7 @@ def checkSheet1(s1):
     if not r:
         log.info('No existe tipo de petición "{}", o no pertenece al proyecto "{}" - ({})'.format(r1c1, r0c1, msg))
     res = readCustomFields(s1)
-    print('cfields:', cFields)
+    #print('cfields:', cFields)
     return r and res
 
 # Hoja 2
@@ -157,52 +157,11 @@ if checkSheet1(s1) and checkSheet2(s2):
             else:
                 iData[field] = s2.cell(f, c).value
         iData['custom_fields'] = iCFields
-        print(iCFields)
         logprint('Fila: {}, Datos: {}'.format(f, iData))
-        #rm.createIssue(iData)
+        rm.createIssue(iData)
     logprint('Fin del proceso, se crearon {} peticiones'.format(f))
 else:
     logprint('Se encontraron errores en la planilla')
 
 log.handlers.clear()
 fh.close()
-
-# Chequea que los valores de las columnas sean válidos
-'''
-for j, f in enumerate(f1):
-    v = fields.get(f)
-    if v == '*':
-        for i in range(1, h2.nrows):
-            cell = h2.cell(i,j).value
-            #print(v, f, i, j, cell)
-            if cell == '':
-                print('La celda "[{}, {}]" está vacía y el campo "{}" es requerido'.format(i, j, f))
-    elif v[:2] == 'id':
-        for i in range(1, h2.nrows):
-            cell = h2.cell(i,j).value
-            print(v, f, i, j, cell)
-            if not checkValuesField(v[3:], cell, pid):
-                print('La celda "[{}, {}]", valor: {} no tiene un valor válido de "{}"'.format(i, j, cell, v[3:]))
-
-        # create new issue
-        issue = redmine.issue.new()
-        issue.project_id = 'vacation'
-        issue.subject = 'Vacation'
-        issue.tracker_id = 8
-        issue.description = 'foo'
-        issue.status_id = 3
-        issue.priority_id = 7
-        issue.assigned_to_id = 123
-        issue.watcher_user_ids = [123]
-        issue.parent_issue_id = 345
-        issue.start_date = datetime.date(2014, 1, 1)
-        issue.due_date = datetime.date(2014, 2, 1)
-        issue.estimated_hours = 4
-        issue.done_ratio = 40
-        issue.custom_fields = [{'id': 1, 'value': 'foo'}, {'id': 2, 'value': 'bar'}]
-        issue.uploads = [{'path': '/absolute/path/to/file'}, {'path': '/absolute/path/to/file2'}]
-        issue.save()
-
-
-
-'''
