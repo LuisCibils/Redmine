@@ -15,8 +15,8 @@ class RM():
         '''
         self.redmine = Redmine(url, key=token)
         self.project = self. tracker = None
-        # 'fieldname': {'required': 'yes|no', 'type': 'id|date|text|int|%|file|issue', 'id': 'keyname'}
 
+        # 'fieldname': {'required': 'yes|no', 'type': 'id|date|text|int|%|file|issue', 'id': 'keyname'}
         self.fields = {
             'Asunto': {'required': 'yes', 'type': 'text'},
             'Descripción': {'required': 'yes', 'type': 'text'},
