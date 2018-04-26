@@ -143,6 +143,9 @@ class RM():
             msg = 'field does not exist'.format(field)
             return r, msg
         f = self.fields[field]
+        if value == '' and f['required'] == 'yes':
+            r = False
+            msg = 'required field'
         if value != '':
             if f['type'] == 'id':
                 if f['id'] == 'status':
