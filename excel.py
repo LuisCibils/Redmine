@@ -9,20 +9,31 @@ from time import strftime
 
 import sys
 import configparser
+import json
 
 def getParameters():
-   # se obtienen los parámetros del sistema desde el archivo del primer parámetro
-   parametros = sys.argv[1]
-   log.info('Archivo de parámetros: {}'.format(parametros))
-   config = configparser.ConfigParser()
-   config.read(parametros, encoding='utf_8')
+    # se obtienen los parámetros del sistema desde el archivo del primer parámetro
+    parametros = sys.argv[1]
+    log.info('Archivo de parámetros: {}'.format(parametros))
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(parametros, encoding='utf_8')
 
-   # Parámetros del sistema
-   par['url'] = config['Parametros del sistema']['url'].strip('"')
-   par['token'] = config['Parametros del sistema']['token'].strip('"')
+    # Parámetros del sistema
+    par = {}
+    par['url'] = config['Parametros del sistema']['url'].strip('"')
+    par['token'] = config['Parametros del sistema']['token'].strip('"')
+    par['Modo de operación'] = config['Parametros del sistema']['Modo de operación'].strip('"')
 
-   par['workbook'] = sys.argv[2]
-   log.info('Planilla: {}'.format(par['workbook']))
+    par['workbook'] = sys.argv[2]
+    log.info('Planilla: {}'.format(par['workbook']))
+
+    if config.has_section('Configuración de campos'):
+        conf_campos = dict((item, json.loads(config['Configuración de campos'][item].strip("'"))) for item in config['Configuración de campos'])
+    else:
+        conf_campos = None
+    log.info('Configuración de campos del archivo de configuración: {}'.format(conf_campos))
+    return par, conf_campos
 
 def configurar_log():
    idfile = strftime('%Y%m%d-%H%M')
@@ -108,18 +119,6 @@ def checkSheet2(s2):
         r = checkValidColumns(s2, NamesR0)
     return r
 
-def composeCustomFields(lista, campo, valor):
-    '''
-    Compose a dict with: custom_fields = [{'id': 1, 'value': 'foo'}, {'id': 2, 'value': 'bar'}]
-    :param lista: {nombre1: id1, nombre2: id2, ...] se arma de los parámetros
-    :param campo: nombre de campo
-    :param valor: valor del campo
-    :return: [id del campo: valor del campo
-    '''
-    if campo not in lista:
-        return False
-    return {lista[campo]: valor}
-
 def logprint(msg):
     log.info(msg)
     print(msg)
@@ -131,15 +130,15 @@ log, fh = configurar_log()
 
 logprint('Inicio del proceso')
 
-par = {} # diccionario de parámetros
-getParameters()
+#par = {} # diccionario de parámetros
+par, conf_campos = getParameters()
 
 wb = open_workbook(par['workbook'])
 
 s1 = wb.sheets()[0]
 s2 = wb.sheets()[1]
 
-rm = RM(par['url'], par['token'])
+rm = RM(par['url'], par['token'], conf_campos)
 
 cFields = {} # lista de custom-fields leídos de la hoja 1
 iData = {} # Datos para crear la petición
@@ -147,21 +146,24 @@ iData = {} # Datos para crear la petición
 logprint('Se procede a validar la planilla')
 
 if checkSheet1(s1) and checkSheet2(s2):
-    logprint('Planilla válida, comienza la carga')
-    for f in range(1, s2.nrows):
-        iCFields = []
-        for c in range(0, s2.ncols):
-            field = s2.cell(0, c).value
-            if field in dict.keys(cFields):
-                iCFields.append({'id':cFields[field], 'value': s2.cell(f, c).value})
-            else:
-                iData[field] = s2.cell(f, c).value
-        iData['custom_fields'] = iCFields
-        logprint('Fila: {}, Datos: {}'.format(f, iData))
-        rm.createIssue(iData)
-    logprint('Fin del proceso, se crearon {} peticiones'.format(f))
+    if par['Modo de operación'] == 'Carga':
+        logprint('Planilla válida, comienza la carga')
+        for f in range(1, s2.nrows):
+            iCFields = []
+            for c in range(0, s2.ncols):
+                field = s2.cell(0, c).value
+                if field in dict.keys(cFields):
+                    iCFields.append({'id':cFields[field], 'value': s2.cell(f, c).value})
+                else:
+                    iData[field] = s2.cell(f, c).value
+            iData['custom_fields'] = iCFields
+            logprint('Fila: {}, Datos: {}'.format(f, iData))
+            rm.createIssue(iData)
+        logprint('Fin del proceso, se crearon {} peticiones'.format(f))
+    else:
+        logprint('Planilla válida. Para cargar cambie la opción "Modo de operación" al valor "Validación" en "parametros.ini"')
 else:
-    logprint('Se encontraron errores en la planilla')
+    logprint('Se encontraron errores en la planilla, no se cargan las peticiones. Revise el Log-aaammdd-xxxx.log')
 
 log.handlers.clear()
 fh.close()

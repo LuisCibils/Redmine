@@ -5,7 +5,7 @@ import datetime
 import os
 
 class RM():
-    def __init__(self, url, token):
+    def __init__(self, url, token, fields_cfg = None):
         '''
         Se conecta a la instancia redmine a través de la API redminelib y crea el objeto 'project'
         que usa en el resto de las funciones
@@ -17,20 +17,23 @@ class RM():
         self.project = self. tracker = None
 
         # 'fieldname': {'required': 'yes|no', 'type': 'id|date|text|int|%|file|issue', 'id': 'keyname'}
-        self.fields = {
-            'Asunto': {'required': 'yes', 'type': 'text'},
-            'Descripción': {'required': 'yes', 'type': 'text'},
-            'Estado': {'required': 'yes', 'type': 'id', 'id': 'status'},
-            'Prioridad': {'required': 'no', 'type': 'id', 'id': 'priority'},
-            'Asignado a': {'required': 'no', 'type': 'id', 'id': 'user'},
-            'Categoría': {'required': 'yes', 'type': 'id', 'id': 'category'},
-            'Fecha de inicio': {'required': 'no', 'type': 'date'},
-            'Fecha fin': {'required': 'no', 'type': 'date'},
-            'Ficheros': {'required': 'no', 'type': 'file'},
-            'Tarea padre': {'required': 'no', 'type': 'issue'},
-            'Tiempo estimado': {'required': 'no', 'type': 'int'},
-            '% Realizado': {'required': 'no', 'type': '%'}
-             }
+        if not fields_cfg:
+            self.fields = {
+                'Asunto': {'required': 'yes', 'type': 'text'},
+                'Descripción': {'required': 'yes', 'type': 'text'},
+                'Estado': {'required': 'yes', 'type': 'id', 'id': 'status'},
+                'Prioridad': {'required': 'no', 'type': 'id', 'id': 'priority'},
+                'Asignado a': {'required': 'no', 'type': 'id', 'id': 'user'},
+                'Categoría': {'required': 'yes', 'type': 'id', 'id': 'category'},
+                'Fecha de inicio': {'required': 'no', 'type': 'date'},
+                'Fecha fin': {'required': 'no', 'type': 'date'},
+                'Ficheros': {'required': 'no', 'type': 'file'},
+                'Tarea padre': {'required': 'no', 'type': 'issue'},
+                'Tiempo estimado': {'required': 'no', 'type': 'int'},
+                '% Realizado': {'required': 'no', 'type': '0-100'}
+                 }
+        else:
+            self.fields = fields_cfg
         self.trackers = self.statuses = self.priorities = self.categories = self.roles = None
 
     def checkValidProject(self, projectName):
@@ -67,7 +70,6 @@ class RM():
                 return True
             except:
                 return False
-
 
     def idStatus(self, statusName):
         '''
@@ -171,7 +173,7 @@ class RM():
             elif f['type'] == 'int' and not isinstance(value, int):
                 r = False
                 msg = 'Not valid int format'
-            elif f['type'] == '%' and not (isinstance(value, int) or value in range(0, 100)):
+            elif f['type'] == '0-100' and not (isinstance(value, int) or value in range(0, 100)):
                 r = False
                 msg = 'Not valid % value'
             elif f['type'] == 'issue' and not self.checkValidIssueId(value):
@@ -248,13 +250,10 @@ class RM():
             issue.done_ratio = fieldsDict['% Realizado']
 
         # Atención, el siguiente campo no está probado!
-
         if 'watcher_user_ids' in fieldsDict and fieldsDict['watcher_user_ids'] != '':
             issue.watcher_user_ids = fieldsDict['watcher_user_ids']
-
         issue.save()
         return
-
 
     def listTrackersInProject(self):
         '''
